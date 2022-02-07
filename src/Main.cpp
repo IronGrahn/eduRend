@@ -86,6 +86,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 	// Init the win32 window
 	g_Window = new Window(hInstance, nCmdShow, g_InitialWinWidth, g_InitialWinHeight);
 
+	g_InputHandler = new InputHandler();
+	g_InputHandler->Initialize(hInstance, g_Window->GetHandle(), g_InitialWinWidth, g_InitialWinHeight);
+
 #ifdef USECONSOLE
 	printf("Win32-window created...\n");
 #ifdef _DEBUG
@@ -137,9 +140,6 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 	__int64 prevTimeStamp = 0;
 	QueryPerformanceCounter((LARGE_INTEGER*)&prevTimeStamp);
-
-	g_InputHandler = new InputHandler();
-	g_InputHandler->Initialize(hInstance, g_Window->GetHandle(), g_InitialWinWidth, g_InitialWinHeight);
 
 	printf("Entering main loop...\n");
 	

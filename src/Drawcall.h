@@ -47,6 +47,8 @@ struct Material
 	// + other texture types
 };
 
+
+
 static Material DefaultMaterial = Material();
 
 typedef std::unordered_map<std::string, Material> MaterialHash;

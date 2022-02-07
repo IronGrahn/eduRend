@@ -1,5 +1,5 @@
 
-cbuffer TransformationBuffer : register(b0)
+cbuffer MatrixBuffer : register(b0)
 {
 	matrix ModelToWorldMatrix;
 	matrix WorldToViewMatrix;
@@ -20,6 +20,7 @@ struct PSIn
 	float4 Pos  : SV_Position;
 	float3 Normal : NORMAL;
 	float2 TexCoord : TEX;
+	float3 WorldPos:POSITION;
 };
 
 //-----------------------------------------------------------------------------------------
@@ -37,10 +38,14 @@ PSIn VS_main(VSIn input)
 	// SV_Position expects the output position to be in clip space
 	matrix MVP = mul(ProjectionMatrix, MV);
 	
+	
 	// Perform transformations and send to output
 	output.Pos = mul(MVP, float4(input.Pos, 1));
 	output.Normal = normalize( mul(ModelToWorldMatrix, float4(input.Normal,0)).xyz );
 	output.TexCoord = input.TexCoord;
-		
+	
+	output.WorldPos = mul(ModelToWorldMatrix, float4(input.Pos, 1)).xyz;
+
 	return output;
 }
+//WorldPos rätt?

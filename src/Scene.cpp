@@ -1,5 +1,7 @@
 
 #include "Scene.h"
+#include "ShaderBuffers.h"
+#include <math.h>
 
 Scene::Scene(
 	ID3D11Device* dxdevice,
@@ -27,7 +29,9 @@ OurTestScene::OurTestScene(
 	int window_height) :
 	Scene(dxdevice, dxdevice_context, window_width, window_height)
 { 
-	InitTransformationBuffer();
+	InitMatrixBuffer();
+	InitLightCamBuffer();
+	InitMaterialBuffer();
 	// + init other CBuffers
 }
 
@@ -46,8 +50,13 @@ void OurTestScene::Init()
 	camera->moveTo({ 0, 0, 5 });
 
 	// Create objects
+	cube = new Cube(dxdevice, dxdevice_context);
+	middleCube = new Cube(dxdevice, dxdevice_context);
+	smallCube = new Cube(dxdevice, dxdevice_context);
+	smallest = new Cube(dxdevice, dxdevice_context);
 	quad = new QuadModel(dxdevice, dxdevice_context);
 	sponza = new OBJModel("assets/crytek-sponza/sponza.obj", dxdevice, dxdevice_context);
+	myModel = new OBJModel("assets/snowman/snowman.obj", dxdevice, dxdevice_context);
 }
 
 //
@@ -58,21 +67,46 @@ void OurTestScene::Update(
 	float dt,
 	InputHandler* input_handler)
 {
+
+
 	// Basic camera control
 	if (input_handler->IsKeyPressed(Keys::Up) || input_handler->IsKeyPressed(Keys::W))
-		camera->move({ 0.0f, 0.0f, -camera_vel * dt });
+		camera->move({ -camera_vel*dt*sin(camera->rotationYaw), 0.0f, -camera_vel * dt * cos(camera->rotationYaw)}); //COS PÅ Z?
 	if (input_handler->IsKeyPressed(Keys::Down) || input_handler->IsKeyPressed(Keys::S))
-		camera->move({ 0.0f, 0.0f, camera_vel * dt });
+		camera->move({ camera_vel * dt * sin(camera->rotationYaw), 0.0f, camera_vel * dt * cos(camera->rotationYaw) });
 	if (input_handler->IsKeyPressed(Keys::Right) || input_handler->IsKeyPressed(Keys::D))
-		camera->move({ camera_vel * dt, 0.0f, 0.0f });
+		camera->move({ camera_vel * dt * cos(camera->rotationYaw), 0.0f, -camera_vel * dt * sin(camera->rotationYaw) });
 	if (input_handler->IsKeyPressed(Keys::Left) || input_handler->IsKeyPressed(Keys::A))
-		camera->move({ -camera_vel * dt, 0.0f, 0.0f });
+		camera->move({ -camera_vel * dt * cos(camera->rotationYaw), 0.0f, camera_vel * dt * sin(camera->rotationYaw) });
+
+	long mousedx = input_handler->GetMouseDeltaX();
+	long mousedy = input_handler->GetMouseDeltaY();
+
+	camera->rotateTo(-mousedx, -mousedy);
 
 	// Now set/update object transformations
 	// This can be done using any sequence of transformation matrices,
 	// but the T*R*S order is most common; i.e. scale, then rotate, and then translate.
 	// If no transformation is desired, an identity matrix can be obtained 
 	// via e.g. Mquad = linalg::mat4f_identity; 
+
+
+
+	Mcube = mat4f::translation(0, 0, 0) *			// No translation
+		mat4f::rotation(-angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
+		mat4f::scaling(1.5, 1.5, 1.5);				// Scale uniformly to 150%
+
+	McubeMiddle = Mcube * mat4f::translation(0.5, 0.5, 0.5) *			
+		mat4f::rotation(-angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
+		mat4f::scaling(0.75, 0.75, 0.75);				
+
+	McubeSmall = McubeMiddle * mat4f::translation(0.5, 0.5, 0.5) *
+		mat4f::rotation(-angle, 0.0f, 1.0f, 0.0f) *		// Rotate continuously around the y-axis
+		mat4f::scaling(0.75, 0.75, 0.75);
+
+	Msmallest = McubeSmall * mat4f::translation(0.5, 0.5, 0.5) *
+		mat4f::rotation(-angle, 0.0f, 1.0f, 0.0f) *		// Rotate continuously around the y-axis
+		mat4f::scaling(0.75, 0.75, 0.75);
 
 	// Quad model-to-world transformation
 	Mquad = mat4f::translation(0, 0, 0) *			// No translation
@@ -83,6 +117,11 @@ void OurTestScene::Update(
 	Msponza = mat4f::translation(0, -5, 0) *		 // Move down 5 units
 		mat4f::rotation(fPI / 2, 0.0f, 1.0f, 0.0f) * // Rotate pi/2 radians (90 degrees) around y
 		mat4f::scaling(0.05f);						 // The scene is quite large so scale it down to 5%
+
+	MmyModel = mat4f::translation(0, -5, 0) *		 // Move down 5 units
+		mat4f::rotation(angle*4, 0.0f, 1.0f, 0.0f) * 
+		mat4f::scaling(1.0f);						 
+
 
 	// Increment the rotation angle.
 	angle += angle_vel * dt;
@@ -103,34 +142,62 @@ void OurTestScene::Update(
 void OurTestScene::Render()
 {
 	// Bind transformation_buffer to slot b0 of the VS
-	dxdevice_context->VSSetConstantBuffers(0, 1, &transformation_buffer);
+	dxdevice_context->VSSetConstantBuffers(0, 1, &matrix_buffer);
+
+	dxdevice_context->PSSetConstantBuffers(1, 1, &lightcam_buffer);
+
+	dxdevice_context->PSSetConstantBuffers(2, 1, &material_buffer);
+
+	//första parametern är för specifik plats. NOTERA skillnad mellan PS och VS
+
+	UpdateLightCamBuffer({ 5,8,0,1 }, camera->position);
 
 	// Obtain the matrices needed for rendering from the camera
 	Mview = camera->get_WorldToViewMatrix();
 	Mproj = camera->get_ProjectionMatrix();
 
+	UpdateMatrixBuffer(Mcube, Mview, Mproj);
+	cube->Render();
+	
+	UpdateMatrixBuffer(McubeMiddle, Mview, Mproj);
+	middleCube->Render();	
+	
+	UpdateMatrixBuffer(McubeSmall, Mview, Mproj);
+	smallCube->Render();
+
+	UpdateMatrixBuffer(Msmallest, Mview, Mproj);
+	smallest->Render();
+
 	// Load matrices + the Quad's transformation to the device and render it
-	UpdateTransformationBuffer(Mquad, Mview, Mproj);
-	quad->Render();
+	//UpdateMatrixBuffer(Mquad, Mview, Mproj);
+	//quad->Render();
 
 	// Load matrices + Sponza's transformation to the device and render it
-	UpdateTransformationBuffer(Msponza, Mview, Mproj);
-	sponza->Render();
+	UpdateMatrixBuffer(Msponza, Mview, Mproj);
+	sponza->Render(material_buffer);
+
+	UpdateMatrixBuffer(MmyModel, Mview, Mproj);
+	myModel->Render(material_buffer);
+
 }
 
 void OurTestScene::Release()
 {
+	SAFE_DELETE(cube);
+	SAFE_DELETE(middleCube);
+	SAFE_DELETE(smallCube);
 	SAFE_DELETE(quad);
 	SAFE_DELETE(sponza);
+	SAFE_DELETE(myModel);
 	SAFE_DELETE(camera);
 
-	SAFE_RELEASE(transformation_buffer);
+	SAFE_RELEASE(matrix_buffer);
+	SAFE_RELEASE(lightcam_buffer);
+	SAFE_RELEASE(material_buffer);
 	// + release other CBuffers
 }
 
-void OurTestScene::WindowResize(
-	int window_width,
-	int window_height)
+void OurTestScene::WindowResize(int window_width,int window_height)
 {
 	if (camera)
 		camera->aspect = float(window_width) / window_height;
@@ -138,30 +205,89 @@ void OurTestScene::WindowResize(
 	Scene::WindowResize(window_width, window_height);
 }
 
-void OurTestScene::InitTransformationBuffer()
+void OurTestScene::InitMatrixBuffer()
 {
 	HRESULT hr;
 	D3D11_BUFFER_DESC MatrixBuffer_desc = { 0 };
 	MatrixBuffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-	MatrixBuffer_desc.ByteWidth = sizeof(TransformationBuffer);
+	MatrixBuffer_desc.ByteWidth = sizeof(MatrixBuffer_t);
 	MatrixBuffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	MatrixBuffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	MatrixBuffer_desc.MiscFlags = 0;
 	MatrixBuffer_desc.StructureByteStride = 0;
-	ASSERT(hr = dxdevice->CreateBuffer(&MatrixBuffer_desc, nullptr, &transformation_buffer));
+	ASSERT(hr = dxdevice->CreateBuffer(&MatrixBuffer_desc, nullptr, &matrix_buffer));
 }
 
-void OurTestScene::UpdateTransformationBuffer(
-	mat4f ModelToWorldMatrix,
-	mat4f WorldToViewMatrix,
-	mat4f ProjectionMatrix)
+
+
+void OurTestScene::UpdateMatrixBuffer(mat4f ModelToWorldMatrix, mat4f WorldToViewMatrix, mat4f ProjectionMatrix)
 {
 	// Map the resource buffer, obtain a pointer and then write our matrices to it
 	D3D11_MAPPED_SUBRESOURCE resource;
-	dxdevice_context->Map(transformation_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-	TransformationBuffer* matrix_buffer_ = (TransformationBuffer*)resource.pData;
+	dxdevice_context->Map(matrix_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	MatrixBuffer_t* matrix_buffer_ = (MatrixBuffer_t*)resource.pData;
 	matrix_buffer_->ModelToWorldMatrix = ModelToWorldMatrix;
 	matrix_buffer_->WorldToViewMatrix = WorldToViewMatrix;
 	matrix_buffer_->ProjectionMatrix = ProjectionMatrix;
-	dxdevice_context->Unmap(transformation_buffer, 0);
+	dxdevice_context->Unmap(matrix_buffer, 0);
 }
+
+void OurTestScene::InitLightCamBuffer()
+{
+	HRESULT hr;
+
+	D3D11_BUFFER_DESC LightCameraBuffer_desc = { 0 };
+	LightCameraBuffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+	LightCameraBuffer_desc.ByteWidth = sizeof(LightCameraBuffer);
+	LightCameraBuffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	LightCameraBuffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	LightCameraBuffer_desc.MiscFlags = 0;
+	LightCameraBuffer_desc.StructureByteStride = 0;
+	ASSERT(hr = dxdevice->CreateBuffer(&LightCameraBuffer_desc, nullptr, &lightcam_buffer));
+
+}
+
+void OurTestScene::UpdateLightCamBuffer(vec4f LightPosition, vec3f CameraPosition)
+{
+	//ge egen ljusposition
+
+	D3D11_MAPPED_SUBRESOURCE resource;
+	dxdevice_context->Map(lightcam_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	LightCameraBuffer* lightcam_buffer_ = (LightCameraBuffer*)resource.pData;
+	lightcam_buffer_->LightPosition = LightPosition;
+	lightcam_buffer_->CameraPosition = {CameraPosition.x,CameraPosition.y,CameraPosition.z,1};
+	dxdevice_context->Unmap(lightcam_buffer, 0);
+}
+
+void OurTestScene::InitMaterialBuffer()
+{
+	HRESULT hr;
+
+	D3D11_BUFFER_DESC MaterialBuffer_desc = { 0 };
+	MaterialBuffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+	MaterialBuffer_desc.ByteWidth = sizeof(MaterialBuffer);
+	MaterialBuffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	MaterialBuffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	MaterialBuffer_desc.MiscFlags = 0;
+	MaterialBuffer_desc.StructureByteStride = 0;
+	ASSERT(hr = dxdevice->CreateBuffer(&MaterialBuffer_desc, nullptr, &material_buffer));
+
+}
+
+void OurTestScene::UpdateMaterialBuffer(vec4f color)
+{
+	D3D11_MAPPED_SUBRESOURCE resource;
+	dxdevice_context->Map(material_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	MaterialBuffer* material_buffer_ = (MaterialBuffer*)resource.pData;
+
+	//Finns nu i Model.cpp Render
+	//material_buffer_->color = color;
+	dxdevice_context->Unmap(material_buffer, 0);
+}
+
+//kopiera matrix buffer rakt av? egen init och update?
+//copy pastea init basically, men ändra parametrar då nya struct
+
+//uppdatera material var? Render i model.cpp/PSmain
+//VSMain i pixelshader? PSMain finns redan
+//implementa material på ett objekt var? via Render också

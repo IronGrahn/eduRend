@@ -20,6 +20,12 @@
 
 using namespace linalg;
 
+
+
+
+
+
+
 class Model
 {
 protected:
@@ -55,6 +61,11 @@ public:
 	}
 };
 
+
+
+
+
+
 class QuadModel : public Model
 {
 	unsigned nbr_indices = 0;
@@ -68,6 +79,23 @@ public:
 	virtual void Render() const;
 
 	~QuadModel() { }
+};
+
+
+class Cube :public Model
+{
+	unsigned nbr_indices = 0;
+
+public:
+	Cube(
+		ID3D11Device* dx3ddevice,
+		ID3D11DeviceContext* dx3ddevice_context
+	);
+
+	virtual void Render() const;
+
+	~Cube() {}
+
 };
 
 class OBJModel : public Model
@@ -96,7 +124,11 @@ public:
 		ID3D11Device* dxdevice,
 		ID3D11DeviceContext* dxdevice_context);
 
-	virtual void Render() const;
+	void Render() const override {}
+
+	 
+
+	virtual void Render(ID3D11Buffer* material_buffer) const;
 
 	~OBJModel();
 };

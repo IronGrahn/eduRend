@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "Model.h"
 #include "Texture.h"
+//inkluda shader buff i scene.cpp
 
 // New files
 // Material
@@ -54,7 +55,10 @@ class OurTestScene : public Scene
 	//
 
 	// CBuffer for transformation matrices
-	ID3D11Buffer* transformation_buffer = nullptr;
+	ID3D11Buffer* matrix_buffer = nullptr;
+	ID3D11Buffer* lightcam_buffer = nullptr;
+	ID3D11Buffer* material_buffer = nullptr;
+
 	// + other CBuffers
 
 	// 
@@ -62,24 +66,29 @@ class OurTestScene : public Scene
 	// These must match the corresponding shader definitions 
 	//
 
-	struct TransformationBuffer
-	{
-		mat4f ModelToWorldMatrix;
-		mat4f WorldToViewMatrix;
-		mat4f ProjectionMatrix;
-	};
+	//struct TransformationBuffer
+	//{
+	//	mat4f ModelToWorldMatrix;
+	//	mat4f WorldToViewMatrix;
+	//	mat4f ProjectionMatrix;
+	//};
 
 	//
 	// Scene content
 	//
 	Camera* camera;
 
+	Cube* cube;
+	Cube* middleCube, *smallCube, *smallest;
 	QuadModel* quad;
 	OBJModel* sponza;
+	OBJModel* myModel;
 
 	// Model-to-world transformation matrices
-	mat4f Msponza;
+	mat4f Mcube, McubeMiddle, McubeSmall, Msmallest;
+	mat4f Msponza, MmyModel;
 	mat4f Mquad;
+
 
 	// World-to-view matrix
 	mat4f Mview;
@@ -92,12 +101,18 @@ class OurTestScene : public Scene
 	float camera_vel = 5.0f;	// Camera movement velocity in units/s
 	float fps_cooldown = 0;
 
-	void InitTransformationBuffer();
+	void InitMatrixBuffer();
 
-	void UpdateTransformationBuffer(
+	void UpdateMatrixBuffer(
 		mat4f ModelToWorldMatrix,
 		mat4f WorldToViewMatrix,
 		mat4f ProjectionMatrix);
+
+	void InitLightCamBuffer();
+	void UpdateLightCamBuffer(vec4f LightPosition, vec3f CameraPosition);
+
+	void InitMaterialBuffer();
+	void UpdateMaterialBuffer(vec4f color);
 
 public:
 	OurTestScene(
