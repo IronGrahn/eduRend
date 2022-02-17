@@ -10,7 +10,7 @@
 
 
 
-Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model(dxdevice, dxdevice_context)
+Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model(dxdevice, dxdevice_context)
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned> indices;
@@ -29,11 +29,11 @@ Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model
 
     v2.Pos = { -0.5, -0.5, 0.5 };
     v2.Normal = { 0, 0, 1 };
-    v2.TexCoord = { 1, 1 };
+    v2.TexCoord = { 1, 0 };
 
     v3.Pos = { 0.5, -0.5, 0.5 };
     v3.Normal = { 0, 0, 1 };
-    v3.TexCoord = { 1, 0 };
+    v3.TexCoord = { 1, 1 };
 
     vertices.push_back(v0);
     vertices.push_back(v1);
@@ -61,11 +61,11 @@ Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model
     
     v6.Pos = { -0.5, 0.5, 0.5 };
     v6.Normal = { 0, 1, 0 };
-    v6.TexCoord = { 1, 1 };
+    v6.TexCoord = { 1, 0 };
     
     v7.Pos = { 0.5, 0.5, 0.5 };
     v7.Normal = { 0, 1, 0 };
-    v7.TexCoord = { 1, 0 };
+    v7.TexCoord = { 1, 1 };
 
     vertices.push_back(v4);
     vertices.push_back(v5);
@@ -93,11 +93,11 @@ Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model
     
     v10.Pos = { 0.5, -0.5, 0.5 };
     v10.Normal = { 1, 0, 0 };
-    v10.TexCoord = { 1, 1 };
+    v10.TexCoord = { 1, 0 };
     
     v11.Pos = { 0.5, -0.5, -0.5 };
     v11.Normal = { 1, 0, 0 };
-    v11.TexCoord = { 1, 0 };
+    v11.TexCoord = { 1, 1 };
 
     vertices.push_back(v8);
     vertices.push_back(v9);
@@ -125,11 +125,11 @@ Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model
 
     v14.Pos = { -0.5, -0.5, -0.5 };
     v14.Normal = { 0, -1, 0 };
-    v14.TexCoord = { 1, 1 };
+    v14.TexCoord = { 1, 0 };
     
     v15.Pos = { 0.5, -0.5, -0.5 };
     v15.Normal = { 0, -1, 0 };
-    v15.TexCoord = { 1, 0 };
+    v15.TexCoord = { 1, 1 };
 
     vertices.push_back(v12);
     vertices.push_back(v13);
@@ -157,11 +157,11 @@ Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model
 
     v18.Pos = { -0.5, -0.5, -0.5 };
     v18.Normal = { -1, 0, 0 };
-    v18.TexCoord = { 1, 1 };
+    v18.TexCoord = { 1, 0 };
 
     v19.Pos = { -0.5, -0.5, 0.5 };
     v19.Normal = { -1, 0, 0 };
-    v19.TexCoord = { 1, 0 };
+    v19.TexCoord = { 1, 1 };
 
     vertices.push_back(v16);
     vertices.push_back(v17);
@@ -189,11 +189,11 @@ Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model
     
     v22.Pos = { 0.5, -0.5, -0.5 };
     v22.Normal = { 0, 0, -1 };
-    v22.TexCoord = { 1, 1 };
+    v22.TexCoord = { 1, 0 };
     
     v23.Pos = { -0.5, -0.5, -0.5 };
     v23.Normal = {0, 0, -1 };
-    v23.TexCoord = { 1, 0 };
+    v23.TexCoord = { 1, 1 };
 
     vertices.push_back(v20);
     vertices.push_back(v21);
@@ -238,9 +238,31 @@ Cube::Cube(ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model
     SETNAME(index_buffer, "IndexBuffer");
 
     nbr_indices = (unsigned int)indices.size();
+
+
+
+    material.Kd_texture_filename = filepath;
+
+    std::cout << "Loading textures..." << std::endl;
+    HRESULT hr;
+
+    // Load Diffuse texture
+    //
+    if (material.Kd_texture_filename.size()) {
+
+        hr = LoadTextureFromFile(
+            dxdevice,
+            material.Kd_texture_filename.c_str(),
+            &material.diffuse_texture);
+        std::cout << "\t" << material.Kd_texture_filename
+            << (SUCCEEDED(hr) ? " - OK" : "- FAILED") << std::endl;
+    }
+
+    // + other texture types here - see Material class
+    // ...    std::cout << "Done." << std::endl;
 }
 
-void Cube::Render() const
+void Cube::Render(ID3D11Buffer* material_buffer) const
 {
     // Bind our vertex buffer
     const UINT32 stride = sizeof(Vertex); //  sizeof(float) * 8;
@@ -250,8 +272,28 @@ void Cube::Render() const
     // Bind our index buffer
     dxdevice_context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
+    // drawcall
+
+    // Bind diffuse texture to slot t0 of the PS
+    dxdevice_context->PSSetShaderResources(0, 1, &material.diffuse_texture.texture_SRV);
+    //binda constant buffer
+
+    D3D11_MAPPED_SUBRESOURCE resource;
+    dxdevice_context->Map(material_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+    MaterialBuffer* material_buffer_ = (MaterialBuffer*)resource.pData;
+    material_buffer_->diffuse = vec4f(1, 1, 1, 1);
+    material_buffer_->ambient = vec4f(1, 1, 1, 1);
+    material_buffer_->specular = vec4f(1, 1, 1, 1);
+    dxdevice_context->Unmap(material_buffer, 0);
+
+    //// + bind other textures here, e.g. a normal map, to appropriate slots
+
+
+
     // Make the drawcall
+
     dxdevice_context->DrawIndexed(nbr_indices, 0, 0);
+
 }
 
 
@@ -410,6 +452,8 @@ OBJModel::OBJModel(
         // Load Diffuse texture
         //
         if (mtl.Kd_texture_filename.size()) {
+
+           
 
             hr = LoadTextureFromFile(
                 dxdevice,

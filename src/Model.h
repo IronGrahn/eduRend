@@ -86,13 +86,36 @@ class Cube :public Model
 {
 	unsigned nbr_indices = 0;
 
+	// index ranges, representing drawcalls, within an index array
+	struct IndexRange
+	{
+		unsigned int start;
+		unsigned int size;
+		unsigned ofs;
+		int mtl_index;
+	};
+
+
+	Material material;
+
+	//std::vector<IndexRange> index_ranges;
+	//std::vector<Material> materials;
+
+	//void append_materials(const std::vector<Material>& mtl_vec)
+	//{
+	//	materials.insert(materials.end(), mtl_vec.begin(), mtl_vec.end());
+	//}
+
 public:
-	Cube(
+	Cube(const std::string& objfile,
 		ID3D11Device* dx3ddevice,
 		ID3D11DeviceContext* dx3ddevice_context
 	);
 
-	virtual void Render() const;
+	virtual void Render() const override{}
+
+	virtual void Render(ID3D11Buffer* material_buffer) const;
+
 
 	~Cube() {}
 
@@ -111,6 +134,7 @@ class OBJModel : public Model
 
 	std::vector<IndexRange> index_ranges;
 	std::vector<Material> materials;
+
 
 	void append_materials(const std::vector<Material>& mtl_vec)
 	{

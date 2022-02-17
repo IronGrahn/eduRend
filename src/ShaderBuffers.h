@@ -37,4 +37,6 @@ struct MaterialBuffer
 	//endast färger plus alpha?
 };
 
+
+
 #endif

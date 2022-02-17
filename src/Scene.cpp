@@ -49,11 +49,30 @@ void OurTestScene::Init()
 	// Move camera to (0,0,5)
 	camera->moveTo({ 0, 0, 5 });
 
+	D3D11_SAMPLER_DESC samplerdesc =
+	{
+	D3D11_FILTER_MIN_MAG_MIP_LINEAR,  // Filter
+	D3D11_TEXTURE_ADDRESS_WRAP, // AddressU
+	D3D11_TEXTURE_ADDRESS_WRAP, // AddressV
+	D3D11_TEXTURE_ADDRESS_CLAMP, // AddressW
+	0.0f, // MipLODBias
+	16, // MaxAnisotropy
+	D3D11_COMPARISON_NEVER, // ComapirsonFunc
+	{ 1.0f, 1.0f, 1.0f, 1.0f }, // BorderColor
+	-FLT_MAX, // MinLOD
+	FLT_MAX, // MaxLOD
+	};
+	dxdevice->CreateSamplerState(&samplerdesc, &sampler);
+
+
+
+	const std::string filepath = "assets/textures/yroadcrossing.png";
+
 	// Create objects
-	cube = new Cube(dxdevice, dxdevice_context);
-	middleCube = new Cube(dxdevice, dxdevice_context);
-	smallCube = new Cube(dxdevice, dxdevice_context);
-	smallest = new Cube(dxdevice, dxdevice_context);
+	cube = new Cube(filepath,dxdevice, dxdevice_context);
+	middleCube = new Cube(filepath,dxdevice, dxdevice_context);
+	smallCube = new Cube(filepath,dxdevice, dxdevice_context);
+	smallest = new Cube(filepath,dxdevice, dxdevice_context);
 	quad = new QuadModel(dxdevice, dxdevice_context);
 	sponza = new OBJModel("assets/crytek-sponza/sponza.obj", dxdevice, dxdevice_context);
 	myModel = new OBJModel("assets/snowman/snowman.obj", dxdevice, dxdevice_context);
@@ -93,15 +112,15 @@ void OurTestScene::Update(
 
 
 	Mcube = mat4f::translation(0, 0, 0) *			// No translation
-		mat4f::rotation(-angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
+		mat4f::rotation(0, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
 		mat4f::scaling(1.5, 1.5, 1.5);				// Scale uniformly to 150%
 
 	McubeMiddle = Mcube * mat4f::translation(0.5, 0.5, 0.5) *			
-		mat4f::rotation(-angle, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
+		mat4f::rotation(0, 0.0f, 1.0f, 0.0f) *	// Rotate continuously around the y-axis
 		mat4f::scaling(0.75, 0.75, 0.75);				
 
 	McubeSmall = McubeMiddle * mat4f::translation(0.5, 0.5, 0.5) *
-		mat4f::rotation(-angle, 0.0f, 1.0f, 0.0f) *		// Rotate continuously around the y-axis
+		mat4f::rotation(0, 0.0f, 1.0f, 0.0f) *		// Rotate continuously around the y-axis
 		mat4f::scaling(0.75, 0.75, 0.75);
 
 	Msmallest = McubeSmall * mat4f::translation(0.5, 0.5, 0.5) *
@@ -148,6 +167,11 @@ void OurTestScene::Render()
 
 	dxdevice_context->PSSetConstantBuffers(2, 1, &material_buffer);
 
+	dxdevice_context->PSSetSamplers(
+		0, // slot #
+		1, // number of samplers to bind (1)
+		&sampler);
+
 	//första parametern är för specifik plats. NOTERA skillnad mellan PS och VS
 
 	UpdateLightCamBuffer({ 5,8,0,1 }, camera->position);
@@ -156,17 +180,19 @@ void OurTestScene::Render()
 	Mview = camera->get_WorldToViewMatrix();
 	Mproj = camera->get_ProjectionMatrix();
 
+	//IMPLEMENTERA MATERIAL BUFFERS I KUBERNA
+
 	UpdateMatrixBuffer(Mcube, Mview, Mproj);
-	cube->Render();
+	cube->Render(material_buffer);
 	
 	UpdateMatrixBuffer(McubeMiddle, Mview, Mproj);
-	middleCube->Render();	
+	middleCube->Render(material_buffer);
 	
 	UpdateMatrixBuffer(McubeSmall, Mview, Mproj);
-	smallCube->Render();
+	smallCube->Render(material_buffer);
 
 	UpdateMatrixBuffer(Msmallest, Mview, Mproj);
-	smallest->Render();
+	smallest->Render(material_buffer);
 
 	// Load matrices + the Quad's transformation to the device and render it
 	//UpdateMatrixBuffer(Mquad, Mview, Mproj);
@@ -194,6 +220,8 @@ void OurTestScene::Release()
 	SAFE_RELEASE(matrix_buffer);
 	SAFE_RELEASE(lightcam_buffer);
 	SAFE_RELEASE(material_buffer);
+	SAFE_RELEASE(sampler);
+
 	// + release other CBuffers
 }
 
