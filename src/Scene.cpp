@@ -66,13 +66,16 @@ void OurTestScene::Init()
 
 
 
-	const std::string filepath = "assets/textures/yroadcrossing.png";
+	const std::string filepath = "assets/textures/Fieldstone_diffuse.png";
+
+	const std::string normal_filepath = "assets/textures/Fieldstone_bump.png";
+
 
 	// Create objects
-	cube = new Cube(filepath,dxdevice, dxdevice_context);
-	middleCube = new Cube(filepath,dxdevice, dxdevice_context);
-	smallCube = new Cube(filepath,dxdevice, dxdevice_context);
-	smallest = new Cube(filepath,dxdevice, dxdevice_context);
+	cube = new Cube(filepath, normal_filepath, dxdevice, dxdevice_context);
+	middleCube = new Cube(filepath, normal_filepath, dxdevice, dxdevice_context);
+	smallCube = new Cube(filepath, normal_filepath, dxdevice, dxdevice_context);
+	smallest = new Cube(filepath, normal_filepath, dxdevice, dxdevice_context);
 	quad = new QuadModel(dxdevice, dxdevice_context);
 	sponza = new OBJModel("assets/crytek-sponza/sponza.obj", dxdevice, dxdevice_context);
 	myModel = new OBJModel("assets/snowman/snowman.obj", dxdevice, dxdevice_context);
@@ -97,6 +100,13 @@ void OurTestScene::Update(
 		camera->move({ camera_vel * dt * cos(camera->rotationYaw), 0.0f, -camera_vel * dt * sin(camera->rotationYaw) });
 	if (input_handler->IsKeyPressed(Keys::Left) || input_handler->IsKeyPressed(Keys::A))
 		camera->move({ -camera_vel * dt * cos(camera->rotationYaw), 0.0f, camera_vel * dt * sin(camera->rotationYaw) });
+	
+	if (input_handler->IsKeyPressed(Keys::Space))
+		camera->move({0, 0.1f,0 });
+	if (input_handler->IsKeyPressed(Keys::Shift))
+		camera->move({0, -0.1f, 0 });
+
+
 
 	long mousedx = input_handler->GetMouseDeltaX();
 	long mousedy = input_handler->GetMouseDeltaY();
@@ -174,7 +184,7 @@ void OurTestScene::Render()
 
 	//första parametern är för specifik plats. NOTERA skillnad mellan PS och VS
 
-	UpdateLightCamBuffer({ 5,8,0,1 }, camera->position);
+	UpdateLightCamBuffer({ 5,10,0,1 }, camera->position);
 
 	// Obtain the matrices needed for rendering from the camera
 	Mview = camera->get_WorldToViewMatrix();

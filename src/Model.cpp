@@ -7,10 +7,16 @@
 #include "Model.h"
 
 
+void rotateVertex(Vertex v, mat4f rotation)
+{
+  /*  v.Binormal = v.Binormal * v.Normal;
+
+    v.Binormal=mul()*/
+
+}
 
 
-
-Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model(dxdevice, dxdevice_context)
+Cube::Cube(const std::string& filepath, const std::string& normal_filepath, ID3D11Device* dxdevice, ID3D11DeviceContext* dxdevice_context) :Model(dxdevice, dxdevice_context)
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned> indices;
@@ -35,10 +41,25 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     v3.Normal = { 0, 0, 1 };
     v3.TexCoord = { 1, 1 };
 
+    v0.Binormal = { 0,1,0 };
+    v0.Tangent = { 1,0,0 };
+
+    v1.Binormal = { 0,1,0 };
+    v1.Tangent = { 1,0,0 };
+
+    v2.Binormal = { 0,1,0 };
+    v2.Tangent = { 1,0,0 };
+
+    v3.Binormal = { 0,1,0 };
+    v3.Tangent = { 1,0,0 };
+
     vertices.push_back(v0);
     vertices.push_back(v1);
     vertices.push_back(v2);
     vertices.push_back(v3);
+
+
+
 
     // Triangle #1
     indices.push_back(0);
@@ -67,6 +88,19 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     v7.Normal = { 0, 1, 0 };
     v7.TexCoord = { 1, 1 };
 
+
+    v4.Binormal = { 0,0,-1 };
+    v4.Tangent = { 1,0,0 };
+
+    v5.Binormal = { 0,0,-1 };
+    v5.Tangent = { 1,0,0 };
+
+    v6.Binormal = { 0,0,-1 };
+    v6.Tangent = { 1,0,0 };
+
+    v7.Binormal = { 0,0,-1 };
+    v7.Tangent = { 1,0,0 };
+
     vertices.push_back(v4);
     vertices.push_back(v5);
     vertices.push_back(v6);
@@ -80,6 +114,10 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     indices.push_back(5);
     indices.push_back(6);
     indices.push_back(7);
+
+    
+
+
 
     //höger / +x
 
@@ -99,6 +137,20 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     v11.Normal = { 1, 0, 0 };
     v11.TexCoord = { 1, 1 };
 
+    v8.Binormal = { 0,1,0 };
+    v8.Tangent = { 0,0,-1 };
+
+    v9.Binormal = { 0,1,0 };
+    v9.Tangent = { 0,0,-1 };
+
+    v10.Binormal = { 0,1,0 };
+    v10.Tangent = { 0,0,-1 };
+
+    v11.Binormal = { 0,1,0 };
+    v11.Tangent = { 0,0,-1 };
+
+
+
     vertices.push_back(v8);
     vertices.push_back(v9);
     vertices.push_back(v10);
@@ -112,6 +164,8 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     indices.push_back(9);
     indices.push_back(10);
     indices.push_back(11);
+
+ 
 
     //ner / -y
 
@@ -131,6 +185,19 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     v15.Normal = { 0, -1, 0 };
     v15.TexCoord = { 1, 1 };
 
+    v12.Binormal = { 0,0,1 };
+    v12.Tangent = { 1,0,0 };
+
+    v13.Binormal = { 0,0,1 };
+    v13.Tangent = { 1,0,0 };
+
+    v14.Binormal = { 0,0,1 };
+    v14.Tangent = { 1,0,0 };
+
+    v15.Binormal = { 0,0,1 };
+    v15.Tangent = { 1,0,0 };
+
+
     vertices.push_back(v12);
     vertices.push_back(v13);
     vertices.push_back(v14);
@@ -144,6 +211,9 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     indices.push_back(13);
     indices.push_back(14);
     indices.push_back(15);
+
+
+
 
     //vänster / -x
     
@@ -163,6 +233,20 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     v19.Normal = { -1, 0, 0 };
     v19.TexCoord = { 1, 1 };
 
+
+    v16.Binormal = { 0,1,0 };
+    v16.Tangent = { 0,0,1 };
+
+    v17.Binormal = { 0,1,0 };
+    v17.Tangent = { 0,0,1 };
+
+    v18.Binormal = { 0,1,0 };
+    v18.Tangent = { 0,0,1 };
+
+    v19.Binormal = { 0,1,0 };
+    v19.Tangent = { 0,0,1 };
+
+
     vertices.push_back(v16);
     vertices.push_back(v17);
     vertices.push_back(v18);
@@ -176,6 +260,7 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     indices.push_back(17);
     indices.push_back(18);
     indices.push_back(19);
+
 
     //bak / -z
 
@@ -195,6 +280,20 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     v23.Normal = {0, 0, -1 };
     v23.TexCoord = { 1, 1 };
 
+
+    v20.Binormal = { 0,1,0 };
+    v20.Tangent = { -1,0,0 };
+
+    v21.Binormal = { 0,1,0 };
+    v21.Tangent = { -1,0,0 };
+
+    v22.Binormal = { 0,1,0 };
+    v22.Tangent = { -1,0,0 };
+
+    v23.Binormal = { 0,1,0 };
+    v23.Tangent = { -1,0,0 };
+
+
     vertices.push_back(v20);
     vertices.push_back(v21);
     vertices.push_back(v22);
@@ -208,6 +307,9 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
     indices.push_back(21);
     indices.push_back(22);
     indices.push_back(23);
+
+
+
 
     // Vertex array descriptor
     D3D11_BUFFER_DESC vbufferDesc = { 0 };
@@ -239,7 +341,7 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
 
     nbr_indices = (unsigned int)indices.size();
 
-
+    
 
     material.Kd_texture_filename = filepath;
 
@@ -256,6 +358,23 @@ Cube::Cube(const std::string& filepath,ID3D11Device* dxdevice, ID3D11DeviceConte
             &material.diffuse_texture);
         std::cout << "\t" << material.Kd_texture_filename
             << (SUCCEEDED(hr) ? " - OK" : "- FAILED") << std::endl;
+    }
+
+
+
+    material.normal_texture_filename = normal_filepath;
+    HRESULT nhr;
+
+    // Load Normal texture
+    //
+    if (material.normal_texture_filename.size()) {
+
+        nhr = LoadTextureFromFile(
+            dxdevice,
+            material.normal_texture_filename.c_str(),
+            &material.normal_texture);
+        std::cout << "\t" << material.normal_texture_filename
+            << (SUCCEEDED(nhr) ? " - OK" : "- FAILED") << std::endl;
     }
 
     // + other texture types here - see Material class
@@ -276,14 +395,15 @@ void Cube::Render(ID3D11Buffer* material_buffer) const
 
     // Bind diffuse texture to slot t0 of the PS
     dxdevice_context->PSSetShaderResources(0, 1, &material.diffuse_texture.texture_SRV);
+    dxdevice_context->PSSetShaderResources(1, 1, &material.normal_texture.texture_SRV);
     //binda constant buffer
 
     D3D11_MAPPED_SUBRESOURCE resource;
     dxdevice_context->Map(material_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
     MaterialBuffer* material_buffer_ = (MaterialBuffer*)resource.pData;
-    material_buffer_->diffuse = vec4f(1, 1, 1, 1);
-    material_buffer_->ambient = vec4f(1, 1, 1, 1);
-    material_buffer_->specular = vec4f(1, 1, 1, 1);
+    material_buffer_->diffuse = vec4f(0.5, 0.5, 0.5,1);
+    material_buffer_->ambient = vec4f(0.5, 0.5, 0.5, 1);
+    material_buffer_->specular = vec4f(0.5, 0.5, 0.5, 1);
     dxdevice_context->Unmap(material_buffer, 0);
 
     //// + bind other textures here, e.g. a normal map, to appropriate slots
@@ -412,6 +532,8 @@ OBJModel::OBJModel(
         i_ofs = (unsigned int)indices.size();
     }
 
+    //loopa igenom indices +3 var gång. för lengyel
+
     // Vertex array descriptor
     D3D11_BUFFER_DESC vbufferDesc = { 0 };
     vbufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -463,6 +585,18 @@ OBJModel::OBJModel(
                 << (SUCCEEDED(hr) ? " - OK" : "- FAILED") << std::endl;
         }
 
+
+
+        if (mtl.normal_texture_filename.size()) {
+
+            hr = LoadTextureFromFile(
+                dxdevice,
+                mtl.normal_texture_filename.c_str(),
+                &mtl.normal_texture);
+            std::cout << "\t" << mtl.normal_texture_filename
+                << (SUCCEEDED(hr) ? " - OK" : "- FAILED") << std::endl;
+        }
+
         // + other texture types here - see Material class
         // ...
     }
@@ -492,6 +626,8 @@ void OBJModel::Render(ID3D11Buffer* material_buffer) const
 
         // Bind diffuse texture to slot t0 of the PS
         dxdevice_context->PSSetShaderResources(0, 1, &mtl.diffuse_texture.texture_SRV);
+        dxdevice_context->PSSetShaderResources(1, 1, &mtl.normal_texture.texture_SRV);
+
         //binda constant buffer
         
         D3D11_MAPPED_SUBRESOURCE resource;

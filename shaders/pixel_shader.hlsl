@@ -1,6 +1,9 @@
 
 Texture2D texDiffuse : register(t0);
 
+Texture2D texNormal : register(t1);
+
+
 SamplerState texSampler : register(s0);
 
 cbuffer LightCameraBuffer:register(b1)
@@ -21,6 +24,8 @@ struct PSIn
 {
 	float4 Pos  : SV_Position;
 	float3 Normal : NORMAL;
+	float3 Tangent : TANGENT;
+	float3 Binormal : BINORMAL;
 	float2 TexCoord : TEX;
 	float3 WorldPos:POSITION;
 };
@@ -32,9 +37,22 @@ struct PSIn
 float4 PS_main(PSIn input) : SV_Target
 {
 
-	float shininess = 10;
+	float shininess = 20;
 
-float3 N = input.Normal;
+//float3 N = input.Normal;
+
+float3x3 TBN = transpose(float3x3(input.Tangent, input.Binormal,
+	input.Normal));
+
+float3 newN = texNormal.Sample(texSampler, input.TexCoord).xyz;
+
+//return float4(newN,1);
+
+newN = newN * 2 - 1;
+
+//float3 newN = { 0,0,0 };
+
+float3 N = mul(TBN, newN);
 
 	float3 L = normalize(LightPosition.xyz - input.WorldPos);
 	float3 V = normalize(CameraPosition.xyz - input.WorldPos);
@@ -48,9 +66,12 @@ float3 N = input.Normal;
 	//return float4(input.TexCoord, 0, 1);
 
 	//return texDiffuse.Sample(texSampler, input.TexCoord).xyz;
+	
+	//return float4(input.Binormal * 0.5 + 0.5, 1);
 
-	return /*ambient +*/  float4(saturate(Id* texDiffuse.Sample(texSampler, input.TexCoord).xyz +Is),1);
+	//return newN
 
+	return ambient +  float4(saturate(Id* texDiffuse.Sample(texSampler, input.TexCoord).xyz +Is),1);
 
 
 	//return color;

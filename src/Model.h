@@ -107,7 +107,8 @@ class Cube :public Model
 	//}
 
 public:
-	Cube(const std::string& objfile,
+	Cube(const std::string& filepath,
+		const std::string& normal_filepath,
 		ID3D11Device* dx3ddevice,
 		ID3D11DeviceContext* dx3ddevice_context
 	);
